@@ -7,13 +7,14 @@ Name: Vy Nguyen
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
 public class GaussianEliminationPivot {
-    private static int[] l;
+    protected static int[] l;
 
     public static int[] indexVector(LinearEquations equations) {
         int n = equations.getNumberEquations();
@@ -94,7 +95,7 @@ public class GaussianEliminationPivot {
         return result;
     }
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws FileNotFoundException, IOException {
         Scanner in = new Scanner(System.in);
         System.out.print("Please choose your source for inputs (\'f\'-file or other character-console stream): ");
         boolean fileInput = in.nextLine().charAt(0) == 'f';
