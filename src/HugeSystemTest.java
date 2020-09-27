@@ -19,14 +19,14 @@ public class HugeSystemTest {
                 }
             }
 
-            //time measurement for Gaussian with SSP
-            GaussianEliminationPivotTest gssp = new GaussianEliminationPivotTest(matrix);
-            testRecords.write(gssp.test() + " \t");
+            GaussianTest g = new GaussianTest(matrix);
 
+            //time measurement for Gaussian with SSP
+            testRecords.write(g.testElimination() + " \t");
             //time measurement for Jacobi
-            Gaussian2Test g2 = new Gaussian2Test(matrix);
-            testRecords.write(g2.testJacobi() + " \t");
-            testRecords.write(g2.testGaussSeidel() + " \t");
+            testRecords.write(g.testJacobi() + " \t");
+            //time measurement for Gauss Seidel with SOR value = 1.0
+            testRecords.write(g.testGaussSeidel() + " \t");
 
             testRecords.write("\n");
         }
@@ -34,14 +34,20 @@ public class HugeSystemTest {
     }
 }
 
-class GaussianEliminationPivotTest{
+class GaussianTest {
     private LinearEquations equations;
+    private double[] startingSolution;
+    private double criterionError;
+    private double sor;
 
-    GaussianEliminationPivotTest(double[][] matrix) {
+    GaussianTest(double [][] matrix) {
         equations = new LinearEquations(matrix);
+        startingSolution = new double[equations.getNumberEquations()];
+        criterionError = 0.0;
+        sor = 1.0;
     }
 
-    public long test() {
+    public long testElimination() {
         int n = equations.getNumberEquations();
         double[][] matrix = equations.getMatrix();
         long start = System.nanoTime();
@@ -89,20 +95,6 @@ class GaussianEliminationPivotTest{
         }
 
         return System.nanoTime() - start;
-    }
-}
-
-class Gaussian2Test {
-    private LinearEquations equations;
-    private double[] startingSolution;
-    private double criterionError;
-    private double sor;
-
-    Gaussian2Test(double [][] matrix) {
-        equations = new LinearEquations(matrix);
-        startingSolution = new double[equations.getNumberEquations()];
-        criterionError = 0.0;
-        sor = 1.0;
     }
 
     public long testJacobi() {
