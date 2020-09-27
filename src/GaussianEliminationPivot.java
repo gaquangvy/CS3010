@@ -55,8 +55,8 @@ public class GaussianEliminationPivot {
             double[] ratio = new double[n];
             String[] ratioFraction = new String[n];
             double maxRatio = 0.0;
-            int maxRatioIndex = i+1;
-            for (int j = 0; j < n; j++) {
+            int maxRatioIndex = i;
+            for (int j = i; j < n; j++) {
                 int index = l[j];
                 ratio[j] = Math.abs(matrix[index][i]) / s[index];
                 if (ratio[j] > maxRatio) {
