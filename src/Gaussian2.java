@@ -31,7 +31,7 @@ public class Gaussian2 {
                 for (int k = 0; k < j; k++) {
                     newSolution[j] -= matrix[j][k] * startingSolution[k];
                 }
-                for (int k = i+1; k < numEquations; k++) {
+                for (int k = j+1; k < numEquations; k++) {
                     newSolution[j] -= matrix[j][k] * startingSolution[k];
                 }
                 newSolution[j] /= matrix[j][j];
@@ -67,7 +67,7 @@ public class Gaussian2 {
                 for (int k = 0; k < j; k++) {
                     newSolution[j] -= matrix[j][k] * newSolution[k];
                 }
-                for (int k = i+1; k < numEquations; k++) {
+                for (int k = j+1; k < numEquations; k++) {
                     newSolution[j] -= matrix[j][k] * startingSolution[k];
                 }
                 newSolution[j] /= matrix[j][j];
@@ -115,33 +115,38 @@ public class Gaussian2 {
         }
         else equations = new LinearEquations();
         System.out.print("\nEquations:\n" + equations + "\n");
+        if (!equations.checkConvergent())
+            System.out.println("Caution! Your equation may not be convergent.");
 
-        //Desired Error
-        System.out.print("How much error at most to stop iterations? ");
-        double error = in.nextDouble();
-        //starting solution
-        int numEquations = equations.getNumberEquations();
-        double[] startingSolution = new double[numEquations];
-        System.out.print("Please input starting solutions: ");
-        for (int i = 0; i < numEquations; i++)
-            startingSolution[i] = in.nextDouble();
-        //Jacobi Method
-        System.out.println("\n==================Jacobi Method==================\n");
-        List<double[]> results = methodJacobi(equations, startingSolution, error);
-        for (int i = 0; i < results.size(); i++)
-            System.out.println("\tIteration k = " + (i+1) + ":\t" + printArray(results.get(i)));
-        System.out.printf("\nThe solution with error <%5.2f is\n", error);
-        System.out.println(printArray(results.get(results.size() - 1)));
+        if (equations.checkDiagonalNonZero()) {
+            //Desired Error
+            System.out.print("How much error at most to stop iterations? ");
+            double error = in.nextDouble();
+            //starting solution
+            int numEquations = equations.getNumberEquations();
+            double[] startingSolution = new double[numEquations];
+            System.out.print("Please input starting solutions: ");
+            for (int i = 0; i < numEquations; i++)
+                startingSolution[i] = in.nextDouble();
+            //Jacobi Method
+            System.out.println("\n==================Jacobi Method==================\n");
+            List<double[]> results = methodJacobi(equations, startingSolution, error);
+            for (int i = 0; i < results.size(); i++)
+                System.out.println("\tIteration k = " + (i + 1) + ":\t" + printArray(results.get(i)));
+            System.out.printf("\nThe solution with error <%5.2f is\n", error);
+            System.out.println(printArray(results.get(results.size() - 1)));
 
-        //SOR value
-        System.out.print("\nHow much sor? ");
-        double sor = in.nextDouble();
-        //Gauss-Seidel Method (same error)
-        System.out.println("\n==================Gauss-Seidel Method==================\n");
-        results = methodGaussSeidel(equations, startingSolution, error, sor);
-        for (int i = 0; i < results.size(); i++)
-            System.out.println("\tIteration k = " + (i+1) + ":\t" + printArray(results.get(i)));
-        System.out.printf("\nThe solution with error <%5.2f is\n", error);
-        System.out.println(printArray(results.get(results.size() - 1)));
+            //SOR value
+            System.out.print("\nHow much sor? ");
+            double sor = in.nextDouble();
+            //Gauss-Seidel Method (same error)
+            System.out.println("\n==================Gauss-Seidel Method==================\n");
+            results = methodGaussSeidel(equations, startingSolution, error, sor);
+            for (int i = 0; i < results.size(); i++)
+                System.out.println("\tIteration k = " + (i + 1) + ":\t" + printArray(results.get(i)));
+            System.out.printf("\nThe solution with error <%5.2f is\n", error);
+            System.out.println(printArray(results.get(results.size() - 1)));
+        }
+        else System.out.println("Pleasure rearrange the system!");
     }
 }

@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
+import static java.lang.Math.abs;
+
 public class GaussianEliminationPivot {
     protected static int[] l;
 
@@ -34,7 +36,7 @@ public class GaussianEliminationPivot {
         for (int i = 0; i < n; i++) {
             double absoluteMax = 0;
             for (int j = 0; j < n; j++)
-                if (Math.abs(e[i][j]) > absoluteMax) absoluteMax = Math.abs(e[i][j]);
+                if (abs(e[i][j]) > absoluteMax) absoluteMax = abs(e[i][j]);
             s[i] = absoluteMax;
         }
 
@@ -58,12 +60,12 @@ public class GaussianEliminationPivot {
             int maxRatioIndex = i;
             for (int j = i; j < n; j++) {
                 int index = l[j];
-                ratio[j] = Math.abs(matrix[index][i]) / s[index];
+                ratio[j] = abs(matrix[index][i]) / s[index];
                 if (ratio[j] > maxRatio) {
                     maxRatio = ratio[j];
                     maxRatioIndex = j;
                 }
-                ratioFraction[j] = Math.abs(matrix[index][i]) + "/" + s[index];
+                ratioFraction[j] = abs(matrix[index][i]) + "/" + s[index];
             }
             System.out.println(Arrays.toString(ratioFraction) + " = " + Arrays.toString(ratio));
             System.out.println("Maximum ratio is " + maxRatio + " at j = " + maxRatioIndex);
@@ -196,5 +198,30 @@ class LinearEquations {
             matrixToString.append(" = ").append(String.format("%6.3f", matrix[i][numberEquations])).append("\n");
         }
         return matrixToString.toString();
+    }
+
+    //check non-zero
+    public boolean checkDiagonalNonZero() {
+        int index = 0;
+        do {
+            if (matrix[index][index] == 0) return false;
+            ++index;
+        } while (index < numberEquations);
+
+        return true;
+    }
+    //check convergent
+    public boolean checkConvergent() {
+        int countEqual = 0;
+        for (int i = 0; i < numberEquations; i++) {
+            double sum = 0;
+            for (int j = 0; j < numberEquations; j++)
+                if (i != j)
+                    sum += abs(matrix[i][j]);
+            if (abs(matrix[i][i]) < sum) return false;
+        }
+
+        if (countEqual == numberEquations) return false;
+        return true;
     }
 }
