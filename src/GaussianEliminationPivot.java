@@ -97,9 +97,9 @@ public class GaussianEliminationPivot {
         return result;
     }
 
-    public static void main(String[] args) throws FileNotFoundException, IOException {
+    public static void main(String[] args) throws IOException {
         Scanner in = new Scanner(System.in);
-        System.out.print("Please choose your source for inputs (\'f\'-file or other character-console stream): ");
+        System.out.print("Please choose your source for inputs ('f'-file or other character-console stream): ");
         boolean fileInput = in.nextLine().charAt(0) == 'f';
 
         LinearEquations equations;
@@ -221,7 +221,6 @@ class LinearEquations {
             if (abs(matrix[i][i]) < sum) return false;
         }
 
-        if (countEqual == numberEquations) return false;
-        return true;
+        return countEqual != numberEquations;
     }
 }
