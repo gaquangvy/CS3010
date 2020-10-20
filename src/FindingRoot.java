@@ -1,3 +1,7 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import static java.lang.Math.*;
@@ -9,24 +13,281 @@ import static java.lang.Math.*;
  Programming Project #3
  ********************************************/
 
-public interface FindingRoot {
-    double methodBisection(Functions f, double left, double right);
-    double methodFalsi(Functions f, double left, double right);
-    double methodNewtonRaphson(Functions f, double x);
-    double methodSecant(Functions f, double x, double xLast);
-    double methodModSecant(Functions f, double x, double modValue);
+public class FindingRoot {
+    static final int max_iteration = 100;
+    static final String inputMessage = "Please enter starting point: ";
 
-    public static void main(String[] args) {
+    public static List<double[]> methodBisection(Functions f, double left, double right, double error) {
+        //setup
+        int i = 0;
+        List<double[]> result = new ArrayList<>();
+        double a = left, b = right, newError = error, root = 0.0;
+
+        //loop - never divergent
+        while (i < max_iteration && f.f(a) != 0 && f.f(b) != 0 && newError >= error) {
+            double fa = f.f(a), fb = f.f(b);
+            double c = (a + b) / 2, fc = f.f(c);
+
+            newError = abs((root-c)/c);
+            result.add(new double[]{a, b, fa, fb, c, fc, 0.0, newError});
+            if (fa * fc < 0) b = c;
+            else if (fa * fc > 0) a = c;
+            else {
+                a = c;
+                b = c;
+            }
+
+            ++i;
+            root = c;
+        }
+
+        int resultLen = result.size();
+        for (int j = 0; j < resultLen; j++) {
+            double[] array = result.get(j);
+            array[6] = abs((root - array[4]) / root);
+            result.set(j, array);
+        }
+
+        return result;
+    }
+
+    static List<double[]> methodFalsi(Functions f, double left, double right, double error) {
+        //setup
+        int i = 0;
+        List<double[]> result = new ArrayList<>();
+        double a = left, b = right, newError = error, root = 0.0;
+
+        while (i < max_iteration && f.f(a) != 0 && f.f(b) != 0 && newError >= error) {
+            double fa = f.f(a), fb = f.f(b);
+            double c = (a * fb - b * fa) / (fb - fa), fc = f.f(c);
+
+            newError = abs((root-c)/c);
+
+            if (fa * fc < 0) b = c;
+            else if (fa * fc > 0) a = c;
+            else {
+                a = c;
+                b = c;
+            }
+
+            ++i;
+            result.add(new double[]{a, b, fa, fb, c, fc, 0.0, newError});
+            root = c;
+        }
+
+        int resultLen = result.size();
+        for (int j = 0; j < resultLen; j++) {
+            double[] array = result.get(j);
+            array[6] = abs((root - array[4]) / root);
+            result.set(j, array);
+        }
+
+        return result;
+    }
+
+    static List<double[]> methodNewtonRaphson(Functions f, double x, double error) {
+        //setup
+        int i = 0;
+        List<double[]> result = new ArrayList<>();
+        double xi = x, newError = error;
+
+        while (i < max_iteration && f.f(xi) != 0 && f.fp(xi) != 0 && newError >= error) {
+            double fx = f.f(xi), fpx = f.fp(xi);
+            double xPlus = xi - fx / fpx, fxPlus = f.f(xPlus), fpxPlus = f.fp(xPlus);
+            newError = abs((xi-xPlus)/xPlus);
+
+            //warning message and this will stop the loop till the end
+            if (fxPlus != 0 && fpxPlus == 0) System.out.println("Cannot find a solution for reaching the local maximum/minimum!");
+            else if (fxPlus == 0) System.out.println(String.format("%.5f", xPlus));
+
+            ++i;
+            result.add(new double[]{xi, fx, fpx, xPlus, fxPlus, fpxPlus, 0.0, newError});
+            xi = xPlus;
+        }
+
+        int resultLen = result.size();
+        for (int j = 0; j < resultLen; j++) {
+            double[] array = result.get(j);
+            array[6] = abs((xi - array[3]) / xi);
+            result.set(j, array);
+        }
+
+        return result;
+    }
+
+    static List<double[]> methodSecant(Functions f, double x, double xLast, double error) {
+        //setup
+        int i = 0;
+        List<double[]> result = new ArrayList<>();
+        double newError = error;
+        double xi = x, xMinus = xLast, fxi = f.f(xi), fxMinus = f.f(xMinus);
+
+        while (i < max_iteration && f.f(xi) != 0 && f.fp(xi) != 0 && newError >= error) {
+            double fx = f.f(x), fpx = f.fp(x);
+            double xPlus = xi - fxi * (xi - xMinus) /(fxi - fxMinus), fxPlus = f.f(xPlus);
+            newError = abs((xi-xPlus)/xPlus);
+
+            ++i;
+            result.add(new double[]{xi, xMinus, fxi, fxMinus, xPlus, fxPlus, 0.0, newError});
+            xMinus = xi;
+            xi = xPlus;
+        }
+
+        int resultLen = result.size();
+        for (int j = 0; j < resultLen; j++) {
+            double[] array = result.get(j);
+            array[6] = abs((xi - array[4]) / xi);
+            result.set(j, array);
+        }
+
+        return result;
+    }
+
+    static List<double[]> methodModSecant(Functions f, double x, double modValue, double error) {
+        //setup
+        int i = 0;
+        List<double[]> result = new ArrayList<>();
+        double newError = error, xi = x;
+
+        while (i < max_iteration && f.f(xi) != 0 && f.fp(xi + modValue * xi) != 0 && newError >= error) {
+            double fxi = f.f(xi), fxMod = f.f(xi + modValue * xi);
+            double xPlus = xi - fxi * modValue * xi /(fxMod - fxi), fxPlus = f.f(xPlus);
+            newError = abs((xi-xPlus)/xPlus);
+
+            ++i;
+            result.add(new double[]{xi, fxi, fxMod, xPlus, fxPlus, 0.0, newError});
+            xi = xPlus;
+        }
+
+        int resultLen = result.size();
+        for (int j = 0; j < resultLen; j++) {
+            double[] array = result.get(j);
+            array[5] = abs((xi - array[3]) / xi);
+            result.set(j, array);
+        }
+
+        return result;
+    }
+
+    public static void main(String[] args) throws IOException {
         System.out.println("Choose an equation below:");
         System.out.println("\t1) 2x^3 – 11.7x^2 + 17.7x – 5 = 0");
         System.out.println("\t2) x + 10 – x*cosh(50/x) = 0");
-        System.out.println("You choose ");
+        System.out.print("You choose ");
         Scanner in = new Scanner(System.in);
         Functions func = new Functions(in.nextInt());
         System.out.println("Your function is\n" + func);
+        System.out.print("Please enter an error to stop loop iteration: ");
+        double error = in.nextDouble();
 
         if (func.checkAvailable()) {
-            System.out.println();
+            //initialize file and bisection method
+            FileWriter file = new FileWriter("bisection.txt");
+
+            System.out.println("\n===================Bisection Method===================\n");
+            System.out.print(inputMessage + "a = ");
+            double a = in.nextDouble();
+            System.out.print(inputMessage + "b = ");
+            double b = in.nextDouble();
+            List<double[]> result = methodBisection(func, a, b, error);
+            int n = result.size();
+            for (int i = 0; i < n; ++i) {
+                file.write((i+1) + "\t");
+                for (double item : result.get(i))
+                    file.write(String.format("%.5f\t", item));
+                file.write("\n");
+            }
+            double root = result.get(n-1)[4];
+            System.out.println("Data has written to bisection.txt!");
+            System.out.println("Number of iterations: " + n);
+            System.out.printf("Root is %.5f%n", root);
+            file.close();
+
+            //falsi method
+            file = new FileWriter("falsi.txt");
+
+            System.out.println("\n===================False Position Method===================\n");
+            System.out.print(inputMessage + "a = ");
+            a = in.nextDouble();
+            System.out.print(inputMessage + "b = ");
+            b = in.nextDouble();
+            result = methodFalsi(func, a, b, error);
+            n = result.size();
+            for (int i = 0; i < n; ++i) {
+                file.write((i+1) + "\t");
+                for (double item : result.get(i))
+                    file.write(String.format("%.5f\t", item));
+                file.write("\n");
+            }
+            root = result.get(n-1)[4];
+            System.out.println("Data has written to bisection.txt!");
+            System.out.println("Number of iterations: " + n);
+            System.out.printf("Root is %.5f%n", root);
+            file.close();
+
+            //Newton Raphson method
+            file = new FileWriter("newton_raphson.txt");
+
+            System.out.println("\n===================Newton Raphson Method===================\n");
+            System.out.print(inputMessage + "x(0) = ");
+            a = in.nextDouble();
+            result = methodNewtonRaphson(func, a, error);
+            n = result.size();
+            for (int i = 0; i < n; ++i) {
+                file.write((i+1) + "\t");
+                for (double item : result.get(i))
+                    file.write(String.format("%.5f\t", item));
+                file.write("\n");
+            }
+            root = result.get(n-1)[3];
+            System.out.println("Data has written to bisection.txt!");
+            System.out.println("Number of iterations: " + n);
+            System.out.printf("Root is %.5f%n", root);
+            file.close();
+
+            //Secant method
+            file = new FileWriter("secant.txt");
+
+            System.out.println("\n===================False Position Method===================\n");
+            System.out.print(inputMessage + "x(0) = ");
+            a = in.nextDouble();
+            System.out.print(inputMessage + "x(1) = ");
+            b = in.nextDouble();
+            result = methodSecant(func, a, b, error);
+            n = result.size();
+            for (int i = 0; i < n; ++i) {
+                file.write((i+1) + "\t");
+                for (double item : result.get(i))
+                    file.write(String.format("%.5f\t", item));
+                file.write("\n");
+            }
+            root = result.get(n-1)[4];
+            System.out.println("Data has written to bisection.txt!");
+            System.out.println("Number of iterations: " + n);
+            System.out.printf("Root is %.5f%n", root);
+            file.close();
+
+            //secant mod method
+            file = new FileWriter("secant_mod.txt");
+
+            System.out.println("\n===================Modified Secant Method===================\n");
+            System.out.print(inputMessage + "x(0) = ");
+            a = in.nextDouble();
+            System.out.print(inputMessage + "mod = ");
+            b = in.nextDouble();
+            result = methodModSecant(func, a, b, error);
+            n = result.size();
+            for (int i = 0; i < n; ++i) {
+                file.write((i+1) + "\t");
+                for (double item : result.get(i))
+                    file.write(String.format("%.5f\t", item));
+                file.write("\n");
+            }
+            root = result.get(n-1)[3];
+            System.out.println("Data has written to bisection.txt!");
+            System.out.println("Number of iterations: " + n);
+            System.out.printf("Root is %.5f%n", root);
+            file.close();
         }
     }
 }
@@ -96,32 +357,5 @@ class Functions {
 
     public String toString() {
         return "\tf(x) = " + funcStream + "\n\tf'(x) = " + funcPrimeStream;
-    }
-}
-
-class Methods implements FindingRoot {
-    //Methods
-    public double methodBisection(Functions f, double left, double right) {
-        return 0.0;
-    }
-
-    public double methodFalsi(Functions f, double left, double right) {
-        return 0.0;
-    }
-
-    public double methodNewtonRaphson(Functions f, double x) {
-        return 0.0;
-    }
-
-    public double methodSecant(Functions f, double x, double xLast) {
-        return 0.0;
-    }
-
-    public double methodModSecant(Functions f, double x, double modValue) {
-        return 0.0;
-    }
-
-    public static void main(String[] args) {
-        
     }
 }
