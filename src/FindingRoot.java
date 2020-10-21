@@ -21,7 +21,7 @@ public class FindingRoot {
         //setup
         int i = 0;
         List<double[]> result = new ArrayList<>();
-        double a = left, b = right, newError = error, root = 0.0;
+        double a = left, b = right, newError = error, root = a;
 
         //loop - never divergent
         while (i < max_iteration && f.f(a) != 0 && f.f(b) != 0 && newError >= error) {
@@ -60,8 +60,8 @@ public class FindingRoot {
         while (i < max_iteration && f.f(a) != 0 && f.f(b) != 0 && newError >= error) {
             double fa = f.f(a), fb = f.f(b);
             double c = (a * fb - b * fa) / (fb - fa), fc = f.f(c);
-
             newError = abs((root-c)/c);
+            result.add(new double[]{a, b, fa, fb, c, fc, 0.0, newError});
 
             if (fa * fc < 0) b = c;
             else if (fa * fc > 0) a = c;
@@ -71,7 +71,6 @@ public class FindingRoot {
             }
 
             ++i;
-            result.add(new double[]{a, b, fa, fb, c, fc, 0.0, newError});
             root = c;
         }
 
@@ -95,13 +94,12 @@ public class FindingRoot {
             double fx = f.f(xi), fpx = f.fp(xi);
             double xPlus = xi - fx / fpx, fxPlus = f.f(xPlus), fpxPlus = f.fp(xPlus);
             newError = abs((xi-xPlus)/xPlus);
+            result.add(new double[]{xi, fx, fpx, xPlus, fxPlus, fpxPlus, 0.0, newError});
 
             //warning message and this will stop the loop till the end
-            if (fxPlus != 0 && fpxPlus == 0) System.out.println("Cannot find a solution for reaching the local maximum/minimum!");
-            else if (fxPlus == 0) System.out.println(String.format("%.5f", xPlus));
+            if (fxPlus != 0 && fpxPlus == 0) System.out.println("Divergent");
 
             ++i;
-            result.add(new double[]{xi, fx, fpx, xPlus, fxPlus, fpxPlus, 0.0, newError});
             xi = xPlus;
         }
 
@@ -120,11 +118,11 @@ public class FindingRoot {
         int i = 0;
         List<double[]> result = new ArrayList<>();
         double newError = error;
-        double xi = x, xMinus = xLast, fxi = f.f(xi), fxMinus = f.f(xMinus);
+        double xi = x, xMinus = xLast;
 
         while (i < max_iteration && f.f(xi) != 0 && f.fp(xi) != 0 && newError >= error) {
-            double fx = f.f(x), fpx = f.fp(x);
-            double xPlus = xi - fxi * (xi - xMinus) /(fxi - fxMinus), fxPlus = f.f(xPlus);
+            double fxi = f.f(xi), fxMinus = f.f(xMinus);
+            double xPlus = xi - (xi - xMinus) / (1 - fxMinus / fxi), fxPlus = f.f(xPlus);
             newError = abs((xi-xPlus)/xPlus);
 
             ++i;
@@ -149,7 +147,7 @@ public class FindingRoot {
         List<double[]> result = new ArrayList<>();
         double newError = error, xi = x;
 
-        while (i < max_iteration && f.f(xi) != 0 && f.fp(xi + modValue * xi) != 0 && newError >= error) {
+        while (i < max_iteration && f.f(xi) != 0 && xi != 0 && newError >= error) {
             double fxi = f.f(xi), fxMod = f.f(xi + modValue * xi);
             double xPlus = xi - fxi * modValue * xi /(fxMod - fxi), fxPlus = f.f(xPlus);
             newError = abs((xi-xPlus)/xPlus);
@@ -177,12 +175,14 @@ public class FindingRoot {
         Scanner in = new Scanner(System.in);
         Functions func = new Functions(in.nextInt());
         System.out.println("Your function is\n" + func);
-        System.out.print("Please enter an error to stop loop iteration: ");
-        double error = in.nextDouble();
 
         if (func.checkAvailable()) {
+            System.out.print("Please enter an error to stop loop iteration: ");
+            double error = in.nextDouble();
+            long timePunch = System.currentTimeMillis();
+
             //initialize file and bisection method
-            FileWriter file = new FileWriter("bisection.txt");
+            FileWriter file = new FileWriter("table_" + timePunch + ".txt");
 
             System.out.println("\n===================Bisection Method===================\n");
             System.out.print(inputMessage + "a = ");
@@ -191,21 +191,22 @@ public class FindingRoot {
             double b = in.nextDouble();
             List<double[]> result = methodBisection(func, a, b, error);
             int n = result.size();
+
+            file.write("Bisections\tTrue\tError\n");
             for (int i = 0; i < n; ++i) {
+                double[] arr = result.get(i);
                 file.write((i+1) + "\t");
-                for (double item : result.get(i))
-                    file.write(String.format("%.5f\t", item));
-                file.write("\n");
+                file.write(arr[6] + "\t");
+                file.write(arr[7] + "\n");
             }
+            file.write("\n");
+
             double root = result.get(n-1)[4];
             System.out.println("Data has written to bisection.txt!");
             System.out.println("Number of iterations: " + n);
             System.out.printf("Root is %.5f%n", root);
-            file.close();
 
             //falsi method
-            file = new FileWriter("falsi.txt");
-
             System.out.println("\n===================False Position Method===================\n");
             System.out.print(inputMessage + "a = ");
             a = in.nextDouble();
@@ -213,63 +214,66 @@ public class FindingRoot {
             b = in.nextDouble();
             result = methodFalsi(func, a, b, error);
             n = result.size();
+
+            file.write("Falsi\tTrue\tError\n");
             for (int i = 0; i < n; ++i) {
+                double[] arr = result.get(i);
                 file.write((i+1) + "\t");
-                for (double item : result.get(i))
-                    file.write(String.format("%.5f\t", item));
-                file.write("\n");
+                file.write(arr[6] + "\t");
+                file.write(arr[7] + "\n");
             }
+            file.write("\n");
+
             root = result.get(n-1)[4];
             System.out.println("Data has written to bisection.txt!");
             System.out.println("Number of iterations: " + n);
             System.out.printf("Root is %.5f%n", root);
-            file.close();
 
             //Newton Raphson method
-            file = new FileWriter("newton_raphson.txt");
-
             System.out.println("\n===================Newton Raphson Method===================\n");
             System.out.print(inputMessage + "x(0) = ");
             a = in.nextDouble();
             result = methodNewtonRaphson(func, a, error);
             n = result.size();
+
+            file.write("NewtonRaphson\tTrue\tError\n");
             for (int i = 0; i < n; ++i) {
+                double[] arr = result.get(i);
                 file.write((i+1) + "\t");
-                for (double item : result.get(i))
-                    file.write(String.format("%.5f\t", item));
-                file.write("\n");
+                file.write(arr[6] + "\t");
+                file.write(arr[7] + "\n");
             }
+            file.write("\n");
+
             root = result.get(n-1)[3];
             System.out.println("Data has written to bisection.txt!");
             System.out.println("Number of iterations: " + n);
             System.out.printf("Root is %.5f%n", root);
-            file.close();
 
             //Secant method
-            file = new FileWriter("secant.txt");
-
-            System.out.println("\n===================False Position Method===================\n");
+            System.out.println("\n===================Secant Method===================\n");
             System.out.print(inputMessage + "x(0) = ");
             a = in.nextDouble();
             System.out.print(inputMessage + "x(1) = ");
             b = in.nextDouble();
             result = methodSecant(func, a, b, error);
             n = result.size();
+
+            file.write("Secant\tTrue\tError\n");
             for (int i = 0; i < n; ++i) {
+                double[] arr = result.get(i);
                 file.write((i+1) + "\t");
-                for (double item : result.get(i))
-                    file.write(String.format("%.5f\t", item));
-                file.write("\n");
+                file.write(arr[6] + "\t");
+                file.write(arr[7] + "\n");
             }
+            file.write("\n");
+
             root = result.get(n-1)[4];
             System.out.println("Data has written to bisection.txt!");
             System.out.println("Number of iterations: " + n);
             System.out.printf("Root is %.5f%n", root);
-            file.close();
 
             //secant mod method
-            file = new FileWriter("secant_mod.txt");
-
             System.out.println("\n===================Modified Secant Method===================\n");
             System.out.print(inputMessage + "x(0) = ");
             a = in.nextDouble();
@@ -277,12 +281,16 @@ public class FindingRoot {
             b = in.nextDouble();
             result = methodModSecant(func, a, b, error);
             n = result.size();
+
+            file.write("ModSecant\tTrue\tError\n");
             for (int i = 0; i < n; ++i) {
+                double[] arr = result.get(i);
                 file.write((i+1) + "\t");
-                for (double item : result.get(i))
-                    file.write(String.format("%.5f\t", item));
-                file.write("\n");
+                file.write(arr[5] + "\t");
+                file.write(arr[6] + "\n");
             }
+            file.write("\n");
+
             root = result.get(n-1)[3];
             System.out.println("Data has written to bisection.txt!");
             System.out.println("Number of iterations: " + n);
@@ -340,7 +348,7 @@ class Functions {
         double result;
         switch (func) {
             case FIRST:
-                result = 6 * pow(x, 2) - 11.7 * x + 17.7;
+                result = 6 * pow(x, 2) - 23.4 * x + 17.7;
                 break;
             case SECOND:
                 result = 1 + cosh(50/x) - (50/x)*sinh(50/x);
@@ -352,7 +360,7 @@ class Functions {
     }
 
     public boolean checkAvailable() {
-        return !(func == Function.NONE);
+        return func != Function.NONE;
     }
 
     public String toString() {
